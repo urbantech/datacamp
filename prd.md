@@ -1,7 +1,7 @@
-# 🧠 PRD: Product Scraper Agent (Shein + Temu)  
-**Project Codename**: `BoomScraper`  
-**Owner**: Data Engineering Team  
-**Date**: April 2025  
+# 🧠 PRD: Product Scraper Agent (Shein + Temu)
+**Project Codename**: `BoomScraper`
+**Owner**: Data Engineering Team
+**Date**: April 2025
 **Platform**: Langflow + Python
 
 ---

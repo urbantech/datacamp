@@ -1,5 +1,3 @@
----
-
 # 🧠 PRD: Product Scraper Agent (Shein + Temu)  
 **Project Codename**: `BoomScraper`  
 **Owner**: Data Engineering Team  

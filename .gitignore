@@ -55,6 +55,10 @@ cover/
 *.mo
 *.pot
 
+# Project specific
+get-pip.py
+poetry.lock
+
 # Django stuff:
 *.log
 local_settings.py

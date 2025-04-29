@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "datacamp"
+version = "0.1.0"
+description = "test-datacamp"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+pydantic = ">=2.10.1,<2.11.0"
+requests = "^2.32.3"
+playwright = "^1.51.0"
+pre-commit = "^4.2.0"
+black = "^25.1.0"
+mypy = "^1.15.0"
+langflow = "^1.3.4"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

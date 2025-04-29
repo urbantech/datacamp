@@ -1,0 +1,87 @@
+[tool.poetry]
+name = "boom-scraper"
+version = "0.1.0"
+description = "Langflow-powered product scraping agent for e-commerce platforms"
+authors = ["Semantic Seed Data Engineering Team <data-eng@semanticseed.com>"]
+readme = "README.md"
+packages = [{include = "tools"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+playwright = "^1.42.0"
+pydantic = "^2.6.0"
+httpx = "^0.27.0"
+langflow = "^0.6.0"
+beautifulsoup4 = "^4.12.0"
+structlog = "^24.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+mypy = "^1.8.0"
+black = "^24.2.0"
+isort = "^5.13.0"
+flake8 = "^7.0.0"
+bandit = "^1.7.6"
+pre-commit = "^3.6.0"
+interrogate = "^1.5.0"
+pytest-cov = "^6.1.1"
+
+[tool.poetry.scripts]
+scraper = "tools.main:main"
+
+[tool.black]
+line-length = 80
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 80
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "scripts"]
+skips = ["B101"]  # Skip assert used as statements
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --doctest-modules --cov=tools"
+
+[tool.coverage.run]
+source = ["tools"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[tool.interrogate]
+ignore-init-method = true
+ignore-private = true
+ignore-module = true
+fail-under = 80
+exclude = ["tests"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

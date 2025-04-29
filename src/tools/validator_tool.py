@@ -1,38 +1,42 @@
-from typing import Dict, Any, Optional
-from pydantic import ValidationError
-from .schemas import ProductSchema
+"""Tool for validating data against a schema."""
+
+from typing import Dict, Any, Optional, Tuple, Type
+from pydantic import BaseModel, ValidationError
+
 
 class ValidatorTool:
-    """Tool for validating product data against defined schemas."""
+    """Tool for validating data against a schema."""
 
-    def __init__(self):
-        self.schema = ProductSchema
-
-    def validate(self, data: Dict[str, Any]) -> tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
-        """
-        Validate product data against the schema.
+    def __init__(self, schema: Type[BaseModel]) -> None:
+        """Initialize the validator tool.
 
         Args:
-            data: Dictionary containing product data to validate
+            schema: Pydantic model class to use for validation
+        """
+        self.schema = schema
+
+    def validate(
+        self, data: Dict[str, Any]
+    ) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+        """Validate data against the schema.
+
+        Args:
+            data: Dictionary containing data to validate
 
         Returns:
-            tuple containing:
-            - bool: True if validation successful, False otherwise
-            - Dict[str, Any] | None: Validated data if successful, None if failed
-            - str | None: Error message if validation failed, None if successful
+            Tuple containing:
+            - Success flag (bool)
+            - Validated data if successful (Dict or None)
+            - Error message if validation failed (str or None)
         """
         try:
-            validated_data = self.schema(**data)
-            return True, validated_data.model_dump(exclude_none=True, exclude_defaults=False), None
+            validated = self.schema(**data)
+            # Convert to dict and ensure URLs are strings
+            validated_dict = validated.model_dump()
+            if 'images' in validated_dict:
+                validated_dict['images'] = [str(url) for url in validated_dict['images']]
+            if 'source_url' in validated_dict:
+                validated_dict['source_url'] = str(validated_dict['source_url'])
+            return True, validated_dict, None
         except ValidationError as e:
-            error_msg = self._format_validation_error(e)
-            return False, None, error_msg
-
-    def _format_validation_error(self, error: ValidationError) -> str:
-        """Format validation error into a readable message."""
-        errors = []
-        for err in error.errors():
-            location = " -> ".join(str(loc) for loc in err["loc"])
-            message = err["msg"]
-            errors.append(f"{location}: {message}")
-        return "\n".join(errors)
+            return False, None, str(e)

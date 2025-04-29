@@ -1,0 +1,97 @@
+# 🤝 Contributing to BoomScraper
+
+## 🌟 Welcome Contributors!
+
+Thank you for your interest in contributing to BoomScraper! We're excited to have you join our community.
+
+## 📋 Contribution Process
+
+### 1. Getting Started
+- Fork the repository
+- Clone your forked repository
+- Create a new branch for your contribution
+
+### 2. Development Setup
+```bash
+# Install Poetry
+pip install poetry
+
+# Clone the repository
+git clone https://github.com/urbantech/boom-scraper.git
+cd boom-scraper
+
+# Install dependencies
+poetry install
+
+# Install pre-commit hooks
+poetry run pre-commit install
+```
+
+### 3. Making Changes
+- Create a new branch: `git checkout -b feature/shortcut-story-id`
+- Follow our TDD workflow:
+  1. Write failing tests
+  2. Implement code to pass tests
+  3. Refactor and improve code
+
+### 4. Commit Guidelines
+- Use conventional commits: 
+  - `feat:` for new features
+  - `fix:` for bug fixes
+  - `docs:` for documentation
+  - `chore:` for maintenance tasks
+- Include Shortcut story ID in commit message
+- Example: `feat(BS-42): Add proxy rotation support`
+
+### 5. Pull Request Process
+- Ensure all tests pass
+- Run `poetry run black .` for formatting
+- Run `poetry run mypy .` for type checking
+- Update documentation if needed
+- Provide a clear PR description
+
+## 🧪 Testing
+
+### Running Tests
+```bash
+# Run all tests
+poetry run pytest
+
+# Run specific test suite
+poetry run pytest tests/unit/
+```
+
+### Test Coverage
+- Aim for 80%+ test coverage
+- Write tests for:
+  - Unit tests for individual components
+  - Integration tests for tool interactions
+  - End-to-end tests for full scraping workflow
+
+## 🛠️ Code Style
+- Follow PEP 8 guidelines
+- Use type hints
+- Write docstrings for all public methods
+- Maximum line length: 80 characters
+
+## 🔒 Security
+- Never commit sensitive information
+- Use environment variables for secrets
+- Report security issues privately
+
+## 📚 Learning Resources
+- [Python Style Guide](https://peps.python.org/pep-0008/)
+- [Test-Driven Development](https://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530)
+- [Langflow Documentation](https://docs.langflow.org/)
+
+## 🤔 Questions?
+- Open an issue for discussions
+- Join our community Slack channel
+- Attend weekly tech talks
+
+## 🏆 Code of Conduct
+- Be respectful and inclusive
+- Provide constructive feedback
+- Celebrate each other's contributions
+
+Happy Contributing! 🚀

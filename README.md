@@ -96,6 +96,66 @@ langflow run
 
 ---
 
+## 🚀 Project Overview
+
+BoomScraper is a modular, AI-orchestrated data ingestion pipeline for scraping e-commerce products from Shein.com and Temu.com, cleaning the data, and submitting it to the Boom Marketplace API.
+
+## 🌟 Features
+
+- Dynamic web scraping with Playwright
+- Modular, Langflow-compatible architecture
+- Bot defense mechanisms
+- Comprehensive data validation
+- Extensible to multiple e-commerce platforms
+
+## 🛠️ Technology Stack
+
+- **Language**: Python 3.10+
+- **Web Scraping**: Playwright
+- **Data Validation**: Pydantic
+- **API Interaction**: httpx
+- **Workflow Orchestration**: Langflow
+
+## 📦 Installation
+
+### Prerequisites
+- Python 3.10+
+- Poetry
+
+### Setup
+```bash
+# Clone the repository
+git clone https://github.com/your-org/boom-scraper.git
+cd boom-scraper
+
+# Install dependencies
+poetry install
+
+# Install Playwright browsers
+poetry run playwright install
+```
+
+## 🧪 Running Tests
+
+```bash
+# Run all tests
+poetry run pytest
+
+# Run with coverage
+poetry run pytest --cov=tools
+```
+
+## 🚀 Usage
+
+### Scraping a Single Product
+```bash
+poetry run python -m tools.main --url https://www.shein.com/product-page
+```
+
+### Langflow Integration
+1. Start Langflow
+2. Import `flows/product_scraper_agent.flow.json`
+
 ## 🔑 Environment Variables
 
 Create a `.env` file in the root directory:
@@ -167,9 +227,18 @@ MIT License. See [`LICENSE`](./LICENSE) for details.
 
 ## 🙌 Contributing
 
-Want to add new scrapers or improve tool accuracy? PRs welcome!
-- Please follow Semantic Seed Coding Standards V2.0
-- Write tests for new logic
-- Document all new tools in `/tools/README.md`
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
----
+## 🔒 Security
+
+See our [SECURITY.md](SECURITY.md) for our responsible disclosure policy.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙌 Acknowledgments
+
+- Semantic Seed Engineering Team
+- Langflow Community
+- Open Source Contributors

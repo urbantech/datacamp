@@ -1,0 +1,178 @@
+[
+  {
+    "title": "Set up Python project structure with Poetry and CI",
+    "body": "Initialize the repository using Poetry, configure `.gitignore`, and set up CI for testing and linting.",
+    "labels": ["sprint1", "setup", "low"],
+    "assignees": [],
+    "milestone": "Sprint 1",
+    "weight": 1
+  },
+  {
+    "title": "Implement BotDefenseTool with random User-Agent and delay",
+    "body": "Create a tool to inject randomized headers and jittered delay (2-10s) into requests to mitigate bot detection.",
+    "labels": ["sprint1", "crawler", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 1",
+    "weight": 2
+  },
+  {
+    "title": "Build PlaywrightCrawlerTool to fetch HTML with JS rendering",
+    "body": "Use Playwright to crawl Shein/Temu product pages and return full rendered HTML content.",
+    "labels": ["sprint1", "crawler", "high"],
+    "assignees": [],
+    "milestone": "Sprint 1",
+    "weight": 3
+  },
+  {
+    "title": "Add ToolInterface base class for Langflow-compatible tools",
+    "body": "Define a Python ABC or base class for all modular tools with a common interface for Langflow.",
+    "labels": ["sprint1", "core", "low"],
+    "assignees": [],
+    "milestone": "Sprint 1",
+    "weight": 1
+  },
+  {
+    "title": "Write unit tests for crawler using static fixture pages",
+    "body": "Create HTML fixture files and write test cases for CrawlerTool using Pytest.",
+    "labels": ["sprint1", "test", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 1",
+    "weight": 2
+  },
+  {
+    "title": "Build SheinScraperTool to extract raw product fields",
+    "body": "Parse Shein HTML and extract title, price, images, description, etc.",
+    "labels": ["sprint2", "scraper", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 2",
+    "weight": 2
+  },
+  {
+    "title": "Build TemuScraperTool to extract raw product fields",
+    "body": "Parse Temu HTML and extract required product data fields.",
+    "labels": ["sprint2", "scraper", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 2",
+    "weight": 2
+  },
+  {
+    "title": "Create CleanerTool to normalize and convert product fields",
+    "body": "Standardize price to cents, unify category names, clean whitespace, etc.",
+    "labels": ["sprint2", "data-cleaning", "high"],
+    "assignees": [],
+    "milestone": "Sprint 2",
+    "weight": 3
+  },
+  {
+    "title": "Add test coverage for malformed or incomplete HTML cases",
+    "body": "Test scraper tools against broken HTML samples and verify fallback logic.",
+    "labels": ["sprint2", "test", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 2",
+    "weight": 2
+  },
+  {
+    "title": "Define ProductSchema using Pydantic",
+    "body": "Create strict schema to validate cleaned data before submission.",
+    "labels": ["sprint3", "schema", "low"],
+    "assignees": [],
+    "milestone": "Sprint 3",
+    "weight": 1
+  },
+  {
+    "title": "Implement ValidatorTool to validate data before API submission",
+    "body": "Use ProductSchema to validate cleaned data and return structured or error output.",
+    "labels": ["sprint3", "validation", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 3",
+    "weight": 2
+  },
+  {
+    "title": "Build APIPosterTool to send POST request with validated data",
+    "body": "Send cleaned, validated data to Boom Marketplace API. Use `httpx` for async HTTP.",
+    "labels": ["sprint3", "api", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 3",
+    "weight": 2
+  },
+  {
+    "title": "Add auth header support to API Poster Tool",
+    "body": "Support optional API key or bearer token configuration for posting tool.",
+    "labels": ["sprint3", "api", "low"],
+    "assignees": [],
+    "milestone": "Sprint 3",
+    "weight": 1
+  },
+  {
+    "title": "Write mock API tests for post tool and error handling",
+    "body": "Simulate posting data to a mock endpoint and test response parsing, failure retries.",
+    "labels": ["sprint3", "test", "high"],
+    "assignees": [],
+    "milestone": "Sprint 3",
+    "weight": 3
+  },
+  {
+    "title": "Create Langflow-compatible flow.json with all tools",
+    "body": "Assemble modular tools into a Langflow importable graph using JSON spec.",
+    "labels": ["sprint4", "langflow", "low"],
+    "assignees": [],
+    "milestone": "Sprint 4",
+    "weight": 1
+  },
+  {
+    "title": "Connect tools in Langflow UI and verify data flow",
+    "body": "Wire URL input to API poster through each tool and test in visual editor.",
+    "labels": ["sprint4", "langflow", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 4",
+    "weight": 2
+  },
+  {
+    "title": "Test complete end-to-end Langflow execution on a single URL",
+    "body": "Verify tool chain performs scrape, clean, validate, and post in Langflow.",
+    "labels": ["sprint4", "langflow", "high"],
+    "assignees": [],
+    "milestone": "Sprint 4",
+    "weight": 3
+  },
+  {
+    "title": "Add real-time logging and tool-by-tool debug outputs",
+    "body": "Implement LoggerTool to print structured logs and failures.",
+    "labels": ["sprint4", "debug", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 4",
+    "weight": 2
+  },
+  {
+    "title": "Implement retry logic for API Poster with exponential backoff",
+    "body": "Add retries (up to 3x) for failed API calls with wait/delay between retries.",
+    "labels": ["sprint5", "resilience", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 5",
+    "weight": 2
+  },
+  {
+    "title": "Create CLI batch runner for ingesting multiple product URLs",
+    "body": "Run Langflow agents or tools in a loop for scraping from a CSV or list of URLs.",
+    "labels": ["sprint5", "cli", "medium"],
+    "assignees": [],
+    "milestone": "Sprint 5",
+    "weight": 2
+  },
+  {
+    "title": "Run QA tests on 20 Shein and 20 Temu product pages",
+    "body": "Scrape, validate, and post 40 real products to test performance and error rate.",
+    "labels": ["sprint5", "qa", "high"],
+    "assignees": [],
+    "milestone": "Sprint 5",
+    "weight": 3
+  },
+  {
+    "title": "Prepare internal demo and documentation walkthrough",
+    "body": "Document how to run the agent, what each tool does, and how to plug in new scrapers.",
+    "labels": ["sprint5", "docs", "low"],
+    "assignees": [],
+    "milestone": "Sprint 5",
+    "weight": 1
+  }
+]

@@ -1,6 +1,6 @@
 # 🛍️ BoomScraper: Langflow-Powered Product Scraper Agent
 
-BoomScraper is a modular, AI-orchestrated data ingestion pipeline for scraping e-commerce products from **Shein.com** and **Temu.com**, cleaning the data, and submitting it to the **Boom Marketplace API**.  
+BoomScraper is a modular, AI-orchestrated data ingestion pipeline for scraping e-commerce products from **Shein.com** and **Temu.com**, cleaning the data, and submitting it to the **Boom Marketplace API**.
 Built with **Langflow**, **Python**, and **Playwright**, this system is designed for fast deployment, robust scraping, and simple agent orchestration.
 
 ---
@@ -19,7 +19,7 @@ Built with **Langflow**, **Python**, and **Playwright**, this system is designed
 ## 🧱 Architecture
 
 ```
-[URL Input] 
+[URL Input]
    ↓
 [Bot Defense Tool]
    ↓
@@ -212,10 +212,10 @@ boom-scraper/
 
 ## 📈 Roadmap
 
-- [ ] Add pagination support for category-level scraping  
-- [ ] Integrate proxy rotation pool  
-- [ ] Extend to additional e-commerce platforms (AliExpress, Amazon)  
-- [ ] Deploy scheduled agent scraping via Celery or Airflow  
+- [ ] Add pagination support for category-level scraping
+- [ ] Integrate proxy rotation pool
+- [ ] Extend to additional e-commerce platforms (AliExpress, Amazon)
+- [ ] Deploy scheduled agent scraping via Celery or Airflow
 
 ---
 

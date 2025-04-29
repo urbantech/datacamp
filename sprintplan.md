@@ -1,9 +1,9 @@
 # 🏗️ Sprint Plan: Product Scraper Agent (BoomScraper)
 
-**Project Codename**: `BoomScraper`  
-**Duration**: 5 weeks (Agile sprints)  
-**Team**: 2–3 engineers (Python + Langflow experience)  
-**Methodology**: Agile Scrum + TDD/BDD + Langflow modular components  
+**Project Codename**: `BoomScraper`
+**Duration**: 5 weeks (Agile sprints)
+**Team**: 2–3 engineers (Python + Langflow experience)
+**Methodology**: Agile Scrum + TDD/BDD + Langflow modular components
 **Repo**: `boom-scraper` (private GitHub)
 
 ---

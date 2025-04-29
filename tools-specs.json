@@ -1,0 +1,243 @@
+---
+
+# 📄 **Document 1: Tool Interface Specs — Product Scraper Agent**
+
+(Only the tool specs here.)
+
+---
+
+## 🧩 Tool Interface Specifications
+
+### 1. URL Input Tool
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `url` | `str` | URL to scrape |
+
+**Output Example:**
+```python
+{ "url": "https://www.shein.com/item/12345.html" }
+```
+
+---
+
+### 2. Bot Defense Tool
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `url` | `str` | Passed forward |
+| `headers` | `dict` | Adds random User-Agent, optional Proxy info |
+| `delay_seconds` | `float` | Random delay between 2-10 seconds |
+
+**Output Example:**
+```python
+{
+  "url": "https://www.shein.com/item/12345.html",
+  "headers": { "User-Agent": "Random Chrome UA" },
+  "delay_seconds": 4.2
+}
+```
+
+---
+
+### 3. Crawler Tool (PlaywrightCrawler)
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `url` | `str` | URL to visit |
+| `headers` | `dict` | Headers to apply in browser session |
+
+**Output Example:**
+```python
+{ "html_content": "<html>....</html>" }
+```
+
+---
+
+### 4. Scraper Tool
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `html_content` | `str` | Raw page HTML |
+| `vendor` | `str` | `"shein"` or `"temu"` |
+
+**Output Example:**
+```python
+{
+  "title": "Summer Dress",
+  "price": "24.99",
+  "currency": "USD",
+  "images": ["https://cdn.shein.com/path.jpg"],
+  "category": "Dresses",
+  "description": "A beautiful dress for summer.",
+  "source_url": "https://shein.com/item/12345",
+  "vendor": "shein"
+}
+```
+
+---
+
+### 5. Cleaner Tool
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `raw_data` | `dict` | Unnormalized scraped product data |
+
+**Output Example:**
+```python
+{
+  "title": "Summer Dress",
+  "price_cents": 2499,
+  "currency": "USD",
+  "images": ["https://cdn.shein.com/path.jpg"],
+  "category": "Dresses",
+  "description": "A beautiful dress for summer.",
+  "source_url": "https://shein.com/item/12345",
+  "vendor": "shein"
+}
+```
+
+---
+
+### 6. Validator Tool
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `clean_data` | `dict` | Normalized and cleaned product info |
+
+**Output Example (Valid):**
+```python
+{ "validated_data": { ... } }
+```
+**Output Example (Error):**
+```python
+{ "error": "Missing required field: title" }
+```
+
+---
+
+### 7. API Poster Tool
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `validated_data` | `dict` | Clean, validated data ready for API POST |
+| `api_url` | `str` | Target API endpoint |
+| `api_key` | `str` | (Optional) API key for authentication |
+
+**Output Example:**
+```python
+{ "status": "success", "response_code": 200 }
+```
+
+---
+
+### 8. Logger Tool
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `event_type` | `str` | Event like `"scrape_success"`, `"post_error"` |
+| `message` | `str` | Log message |
+| `data` | `dict` | Payload related to event |
+
+**Output Example:**
+(No output; logs to file or console.)
+
+---
+
+# ✅ End of Document 1
+
+---
+
+# 📂 **Document 2: Langflow Bootstrap Flow (`flow.json`)**
+
+(Only the importable JSON here.)
+
+---
+
+```json
+{
+  "flow": {
+    "id": "product_scraper_agent",
+    "name": "Product Scraper Agent",
+    "description": "Crawl product pages from Shein and Temu, clean data, post to REST API",
+    "nodes": [
+      {
+        "id": "url_input",
+        "type": "Input",
+        "name": "URL Input",
+        "outputs": ["bot_defense"],
+        "properties": {
+          "input_type": "text",
+          "label": "Enter product or category URL"
+        }
+      },
+      {
+        "id": "bot_defense",
+        "type": "Tool",
+        "name": "Bot Defense Tool",
+        "inputs": ["url_input"],
+        "outputs": ["crawler"],
+        "properties": {
+          "tool_type": "bot_defense_tool"
+        }
+      },
+      {
+        "id": "crawler",
+        "type": "Tool",
+        "name": "Playwright Crawler Tool",
+        "inputs": ["bot_defense"],
+        "outputs": ["scraper"],
+        "properties": {
+          "tool_type": "playwright_crawler_tool"
+        }
+      },
+      {
+        "id": "scraper",
+        "type": "Tool",
+        "name": "Scraper Tool",
+        "inputs": ["crawler"],
+        "outputs": ["cleaner"],
+        "properties": {
+          "tool_type": "scraper_tool"
+        }
+      },
+      {
+        "id": "cleaner",
+        "type": "Tool",
+        "name": "Cleaner Tool",
+        "inputs": ["scraper"],
+        "outputs": ["validator"],
+        "properties": {
+          "tool_type": "cleaner_tool"
+        }
+      },
+      {
+        "id": "validator",
+        "type": "Tool",
+        "name": "Validator Tool",
+        "inputs": ["cleaner"],
+        "outputs": ["api_poster"],
+        "properties": {
+          "tool_type": "validator_tool"
+        }
+      },
+      {
+        "id": "api_poster",
+        "type": "Tool",
+        "name": "API Poster Tool",
+        "inputs": ["validator"],
+        "outputs": ["logger"],
+        "properties": {
+          "tool_type": "api_poster_tool",
+          "api_url": "https://your-api-url.com/products",
+          "api_key": "your-api-key-if-needed"
+        }
+      },
+      {
+        "id": "logger",
+        "type": "Tool",
+        "name": "Logger Tool",
+        "inputs": ["api_poster"],
+        "outputs": [],
+        "properties": {
+          "tool_type": "logger_tool"
+        }
+      }
+    ]
+  }
+}
+```
+
+---

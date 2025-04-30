@@ -1,0 +1,33 @@
+{
+    "name": "Test Scraper Flow",
+    "description": "Basic flow to test scraping functionality",
+    "data": {
+        "nodes": [
+            {
+                "id": "scraper_1",
+                "type": "PlaywrightCrawlerTool",
+                "position": {"x": 100, "y": 100},
+                "data": {
+                    "url": "",
+                    "retries": 3
+                }
+            },
+            {
+                "id": "bot_defense_1",
+                "type": "BotDefenseTool",
+                "position": {"x": 300, "y": 100},
+                "data": {
+                    "min_delay": 1,
+                    "max_delay": 3
+                }
+            }
+        ],
+        "edges": [
+            {
+                "source": "scraper_1",
+                "target": "bot_defense_1",
+                "id": "edge_1"
+            }
+        ]
+    }
+}

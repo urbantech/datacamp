@@ -1,0 +1,8 @@
+host: 0.0.0.0
+port: 7860
+database_url: sqlite:///flows/data/langflow.db
+cache_type: memory
+log_level: info
+log_file: flows/logs/langflow.log
+components_path: flows/custom_components
+flows_path: flows/examples

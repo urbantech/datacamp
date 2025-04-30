@@ -1,13 +1,6 @@
-"""PlaywrightCrawlerTool module."""
+"""Playwright crawler tool module."""
 
-from .tool import (
-    PlaywrightCrawlerConfig,
-    PlaywrightCrawlerTool,
-    PlaywrightError,
-)
+from tools.playwright_crawler.config import PlaywrightConfig
+from tools.playwright_crawler.tool import PlaywrightCrawlerTool
 
-__all__ = [
-    "PlaywrightCrawlerTool",
-    "PlaywrightCrawlerConfig",
-    "PlaywrightError",
-]
+__all__ = ["PlaywrightCrawlerTool", "PlaywrightConfig"]

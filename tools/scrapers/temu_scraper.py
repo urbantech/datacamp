@@ -50,7 +50,8 @@ class TemuScraperTool(ToolInterface, BaseScraper):
         else:
             content = await self.crawler.fetch(input_data["url"])
 
-        return {
+        # Extract data from content
+        result = {
             "title": self.extract_title(content),
             "price": self.extract_price(content),
             "currency": self.extract_currency(content),
@@ -61,7 +62,18 @@ class TemuScraperTool(ToolInterface, BaseScraper):
             "color_options": self.extract_color_options(content),
             "reviews_summary": self.extract_reviews_summary(content),
             "source_url": input_data["url"],
+            # Include url field for backward compatibility
+            "url": input_data["url"],
         }
+
+        # Add category if available (needed for some tests)
+        try:
+            result["category"] = self.extract_category(content)
+        except ValueError:
+            # Category is optional, so don't fail if it's not found
+            pass
+
+        return result
 
     """Scraper for Temu product pages."""
 
@@ -154,13 +166,16 @@ class TemuScraperTool(ToolInterface, BaseScraper):
 
         Returns:
             str: Product category
+
+        Raises:
+            ValueError: If category element is not found
         """
         soup = BeautifulSoup(content["html"], "html.parser")
-        breadcrumbs = soup.select(".DetailBreadcrumb_item")
-        if not breadcrumbs:
+        breadcrumb = soup.select(".DetailBreadcrumb_item")
+        if not breadcrumb:
             raise ValueError("Could not find product category")
-        # Use the last breadcrumb as the category
-        return str(breadcrumbs[-1].text.strip())
+        # Return the last breadcrumb item as the category
+        return str(breadcrumb[-1].text.strip())
 
     def extract_description(self, content: Dict[str, Any]) -> str:
         """Extract product description.

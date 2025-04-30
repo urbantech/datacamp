@@ -1,6 +1,7 @@
 """Tool for validating data against a schema."""
 
-from typing import Dict, Any, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple, Type
+
 from pydantic import BaseModel, ValidationError
 
 
@@ -32,11 +33,13 @@ class ValidatorTool:
         try:
             validated = self.schema(**data)
             # Convert to dict and ensure URLs are strings
-            validated_dict = validated.model_dump()
-            if 'images' in validated_dict:
-                validated_dict['images'] = [str(url) for url in validated_dict['images']]
-            if 'source_url' in validated_dict:
-                validated_dict['source_url'] = str(validated_dict['source_url'])
+            validated_dict = validated.model_dump(exclude_none=True)
+            if "images" in validated_dict:
+                validated_dict["images"] = [
+                    str(url) for url in validated_dict["images"]
+                ]
+            if "source_url" in validated_dict:
+                validated_dict["source_url"] = str(validated_dict["source_url"])
             return True, validated_dict, None
         except ValidationError as e:
             return False, None, str(e)

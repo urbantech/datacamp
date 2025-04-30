@@ -55,34 +55,37 @@ class PlaywrightCrawlerTool:
         return await context.new_page()
 
     async def fetch(self, url: str) -> Dict[str, Any]:
-        """Fetch content from a URL using Playwright."""
-        page: Optional[Page] = None
+        """Fetch content from a URL.
+
+        Args:
+            url: URL to fetch content from
+
+        Returns:
+            Dictionary containing:
+            - content: HTML content of the page
+            - status: HTTP status code
+            - headers: Response headers
+            - url: Final URL after redirects
+
+        Raises:
+            Exception: If page load fails or response is not OK
+        """
+        page = await self._get_page()
         try:
-            page = await self._get_page()
+            # Navigate to URL and wait for network idle
             response = await page.goto(
                 url,
-                timeout=self.config.timeout,
                 wait_until=self.config.wait_until,
+                timeout=self.config.timeout,
             )
 
             if not response:
-                return {
-                    "url": url,
-                    "status": 0,
-                    "content": "",
-                    "title": "",
-                    "headers": {},
-                }
+                raise Exception("No response received from page")
 
             if not response.ok:
-                return {
-                    "url": url,
-                    "status": response.status,
-                    "content": "",
-                    "title": "",
-                    "headers": dict(response.headers),
-                }
+                raise Exception(f"Response not OK. Status: {response.status}")
 
+            # Get page content
             content = await page.content()
             title = await page.title()
 
@@ -96,11 +99,8 @@ class PlaywrightCrawlerTool:
 
             return result
 
-        except Exception as e:
-            raise e
         finally:
-            if page:
-                await page.close()
+            await page.close()
 
     async def cleanup(self):
         """Clean up resources."""

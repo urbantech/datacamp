@@ -189,28 +189,28 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.50.0"
+version = "0.15.1"
 description = "The official Python library for the anthropic API"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "anthropic-0.50.0-py3-none-any.whl", hash = "sha256:defbd79327ca2fa61fd7b9eb2f1627dfb1f69c25d49288c52e167ddb84574f80"},
-    {file = "anthropic-0.50.0.tar.gz", hash = "sha256:42175ec04ce4ff2fa37cd436710206aadff546ee99d70d974699f59b49adc66f"},
+    {file = "anthropic-0.15.1-py3-none-any.whl", hash = "sha256:50344141ba12580dac829acc1a6921905e975393cca16c99b796a63903e997b9"},
+    {file = "anthropic-0.15.1.tar.gz", hash = "sha256:f188037c09a86c993196967a7c4ca7b0c30a7f51b261a9360528b5104069c088"},
 ]
 
 [package.dependencies]
 anyio = ">=3.5.0,<5"
 distro = ">=1.7.0,<2"
-httpx = ">=0.25.0,<1"
-jiter = ">=0.4.0,<1"
+httpx = ">=0.23.0,<1"
 pydantic = ">=1.9.0,<3"
 sniffio = "*"
-typing-extensions = ">=4.10,<5"
+tokenizers = ">=0.13.0"
+typing-extensions = ">=4.7,<5"
 
 [package.extras]
 bedrock = ["boto3 (>=1.28.57)", "botocore (>=1.31.57)"]
-vertex = ["google-auth[requests] (>=2,<3)"]
+vertex = ["google-auth (>=2,<3)"]
 
 [[package]]
 name = "anyio"
@@ -1078,18 +1078,6 @@ files = [
 [package.dependencies]
 marshmallow = ">=3.18.0,<4.0.0"
 typing-inspect = ">=0.4.0,<1"
-
-[[package]]
-name = "defusedxml"
-version = "0.7.1"
-description = "XML bomb protection for Python stdlib modules"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-groups = ["main"]
-files = [
-    {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
-    {file = "defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69"},
-]
 
 [[package]]
 name = "deprecated"
@@ -3142,23 +3130,6 @@ qdrant = ["qdrant-client (>=1.3.1,<2.0.0) ; python_full_version >= \"3.8.1\" and
 text-helpers = ["chardet (>=5.1.0,<6.0.0)"]
 
 [[package]]
-name = "langchain-anthropic"
-version = "0.1.13"
-description = "An integration package connecting AnthropicMessages and LangChain"
-optional = false
-python-versions = "<4.0,>=3.8.1"
-groups = ["main"]
-files = [
-    {file = "langchain_anthropic-0.1.13-py3-none-any.whl", hash = "sha256:121f6f480da7685c239573d98322adb94fe486d40651ac341637f65da36881de"},
-    {file = "langchain_anthropic-0.1.13.tar.gz", hash = "sha256:32e7ac51e1874c47e1a20493e75f5bfc88b0ffeaf5f1aed6091547e1ae44bb85"},
-]
-
-[package.dependencies]
-anthropic = ">=0.26.0,<1"
-defusedxml = ">=0.7.1,<0.8.0"
-langchain-core = ">=0.1.43,<0.3"
-
-[[package]]
 name = "langchain-community"
 version = "0.0.38"
 description = "Community contributed LangChain integrations."
@@ -3265,23 +3236,6 @@ openai = ">=1.10.0,<2.0.0"
 tiktoken = ">=0.5.2,<1"
 
 [[package]]
-name = "langchain-pinecone"
-version = "0.1.2"
-description = "An integration package connecting Pinecone and LangChain"
-optional = false
-python-versions = "<3.13,>=3.8.1"
-groups = ["main"]
-files = [
-    {file = "langchain_pinecone-0.1.2-py3-none-any.whl", hash = "sha256:07157885ef1e45bedadc3f7ea6bb181ec458fae5fd82dc7a6005444f67100613"},
-    {file = "langchain_pinecone-0.1.2.tar.gz", hash = "sha256:654fd93df8cefe1ff0ca7ac50cf308242df69a601ee3855019b524006b528595"},
-]
-
-[package.dependencies]
-langchain-core = ">=0.1.52,<0.3"
-numpy = {version = ">=1,<2", markers = "python_version < \"3.12\""}
-pinecone-client = ">=3.2.2,<5"
-
-[[package]]
 name = "langchain-text-splitters"
 version = "0.0.2"
 description = "LangChain text splitting utilities"
@@ -3316,17 +3270,18 @@ six = "*"
 
 [[package]]
 name = "langflow"
-version = "0.6.19"
+version = "0.6.10"
 description = "A Python package with a built-in web application"
 optional = false
-python-versions = "<3.12,>=3.9"
+python-versions = ">=3.9,<3.12"
 groups = ["main"]
 files = [
-    {file = "langflow-0.6.19.tar.gz", hash = "sha256:734c0546d166ccecd231a3d42be17acd4f86ae232fe036ef9f76149dce90a3a8"},
+    {file = "langflow-0.6.10.tar.gz", hash = "sha256:d4b065b8c8c6fb74cac403010df80932fe5b5f7d5807af1764d8d96119e6e49e"},
 ]
 
 [package.dependencies]
 alembic = ">=1.13.0,<2.0.0"
+anthropic = ">=0.15.0,<0.16.0"
 bcrypt = "4.0.1"
 beautifulsoup4 = ">=4.12.2,<5.0.0"
 boto3 = ">=1.34.0,<2.0.0"
@@ -3348,11 +3303,9 @@ gunicorn = ">=21.2.0,<22.0.0"
 huggingface-hub = {version = ">=0.20.0,<0.21.0", extras = ["inference"]}
 jq = {version = ">=1.6.0,<2.0.0", markers = "sys_platform != \"win32\""}
 langchain = ">=0.1.0,<0.2.0"
-langchain-anthropic = ">=0.1.4,<0.2.0"
 langchain-experimental = "*"
 langchain-google-genai = ">=0.0.6,<0.0.7"
 langchain-openai = ">=0.0.6,<0.0.7"
-langchain-pinecone = ">=0.1.0,<0.2.0"
 langfuse = ">=2.9.0,<3.0.0"
 llama-index = "0.9.48"
 loguru = ">=0.7.1,<0.8.0"
@@ -3394,7 +3347,6 @@ tiktoken = ">=0.6.0,<0.7.0"
 typer = ">=0.9.0,<0.10.0"
 types-cachetools = ">=5.3.0.5,<6.0.0.0"
 unstructured = ">=0.12.0,<0.13.0"
-urllib3 = "<2"
 uvicorn = ">=0.27.0,<0.28.0"
 weaviate-client = "*"
 websockets = ">=10.3,<11.0"
@@ -7410,6 +7362,21 @@ files = [
 ]
 
 [[package]]
+name = "types-requests"
+version = "2.32.0.20250328"
+description = "Typing stubs for requests"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "types_requests-2.32.0.20250328-py3-none-any.whl", hash = "sha256:72ff80f84b15eb3aa7a8e2625fffb6a93f2ad5a0c20215fc1dcfa61117bcb2a2"},
+    {file = "types_requests-2.32.0.20250328.tar.gz", hash = "sha256:c9e67228ea103bd811c96984fac36ed2ae8da87a36a633964a21f199d60baf32"},
+]
+
+[package.dependencies]
+urllib3 = ">=2"
+
+[[package]]
 name = "typing-extensions"
 version = "4.13.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -7611,20 +7578,21 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "1.26.20"
+version = "2.4.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
+python-versions = ">=3.9"
 groups = ["main", "dev"]
 files = [
-    {file = "urllib3-1.26.20-py2.py3-none-any.whl", hash = "sha256:0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e"},
-    {file = "urllib3-1.26.20.tar.gz", hash = "sha256:40c2dc0c681e47eb8f90e7e27bf6ff7df2e677421fd46756da1161c39ca70d32"},
+    {file = "urllib3-2.4.0-py3-none-any.whl", hash = "sha256:4e16665048960a0900c702d4a66415956a584919c03361cac9f1df5c5dd7e813"},
+    {file = "urllib3-2.4.0.tar.gz", hash = "sha256:414bc6535b787febd7567804cc015fee39daab8ad86268f1310a9250697de466"},
 ]
 
 [package.extras]
-brotli = ["brotli (==1.0.9) ; os_name != \"nt\" and python_version < \"3\" and platform_python_implementation == \"CPython\"", "brotli (>=1.0.9) ; python_version >= \"3\" and platform_python_implementation == \"CPython\"", "brotlicffi (>=0.8.0) ; (os_name != \"nt\" or python_version >= \"3\") and platform_python_implementation != \"CPython\"", "brotlipy (>=0.6.0) ; os_name == \"nt\" and python_version < \"3\""]
-secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "ipaddress ; python_version == \"2.7\"", "pyOpenSSL (>=0.14)", "urllib3-secure-extra"]
-socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
+brotli = ["brotli (>=1.0.9) ; platform_python_implementation == \"CPython\"", "brotlicffi (>=0.8.0) ; platform_python_implementation != \"CPython\""]
+h2 = ["h2 (>=4,<5)"]
+socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
+zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "uvicorn"
@@ -8247,4 +8215,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.12"
-content-hash = "0b99dfa4beeec4abef4ef2d5e47bafe5bfaa489a5068c1a2d5daafe02f417870"
+content-hash = "b8e8ecfe458497b5163dbb25f1635ab10bc61d52f342a747f6b91e9042eee1ed"

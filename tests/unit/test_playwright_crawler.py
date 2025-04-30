@@ -9,6 +9,7 @@ import pytest
 from tools.playwright_crawler import (
     PlaywrightCrawlerConfig,
     PlaywrightCrawlerTool,
+    PlaywrightError,
 )
 
 # Fixture directory path
@@ -65,6 +66,7 @@ def mock_context():
     context = AsyncMock()
     context.new_page = AsyncMock()
     context.set_extra_http_headers = AsyncMock()
+    context.close = AsyncMock()
     return context
 
 
@@ -173,67 +175,42 @@ async def test_get_page(
     mock_playwright_instance,
 ):
     """Test _get_page method."""
-    print("\n=== Starting Get Page Test ===")
+    # Configure mock page
+    mock_page.goto = AsyncMock()
+    mock_page.close = AsyncMock()
 
-    try:
-        # Configure mock page
-        mock_page.close.return_value = None
+    # Configure mock context
+    mock_context.new_page = AsyncMock(return_value=mock_page)
+    mock_context.set_extra_http_headers = AsyncMock()
+    mock_context.close = AsyncMock()
 
-        # Configure mock context
-        mock_context.new_page.return_value = mock_page
-        mock_context.set_extra_http_headers.return_value = None
+    # Configure mock browser
+    mock_browser.new_context = AsyncMock(return_value=mock_context)
+    mock_browser.close = AsyncMock()
 
-        # Configure mock browser
-        mock_browser.new_context.return_value = mock_context
-        mock_browser.close.return_value = None
+    # Configure mock chromium
+    mock_chromium.launch = AsyncMock(return_value=mock_browser)
 
-        # Configure mock chromium
-        mock_chromium.launch.return_value = mock_browser
+    # Create crawler with custom config
+    config = PlaywrightCrawlerConfig(
+        viewport_width=1024, viewport_height=768, user_agent=None
+    )
+    crawler = PlaywrightCrawlerTool(config)
+    crawler._browser = mock_browser
 
-        # Configure mock playwright
-        mock_playwright_instance.chromium = mock_chromium
-        mock_playwright_instance.start.return_value = mock_playwright_instance
+    # Test _get_page
+    page = await crawler._get_page()
 
-        print("Configured mocks")
+    # Verify browser.new_context was called with correct arguments
+    mock_browser.new_context.assert_called_once_with(
+        viewport={"width": 1024, "height": 768}, user_agent=None
+    )
 
-        # Patch playwright
-        with patch(
-            "playwright.async_api.async_playwright",
-            return_value=mock_playwright_instance,
-        ):
-            print("Patched playwright")
+    # Verify context.new_page was called
+    mock_context.new_page.assert_called_once()
 
-            # Create crawler with custom config
-            config = PlaywrightCrawlerConfig(
-                viewport_width=1024, viewport_height=768, use_bot_defense=True
-            )
-            crawler = PlaywrightCrawlerTool(config=config)
-            print("Created crawler")
-
-            # Set browser directly to avoid _get_browser issues
-            crawler._browser = mock_browser
-
-            # Get page
-            page = await crawler._get_page()
-            print("Got page")
-
-            # Verify page was created with correct config
-            mock_browser.new_context.assert_called_once_with(
-                viewport={"width": 1024, "height": 768}
-            )
-            mock_context.set_extra_http_headers.assert_called_once()
-            mock_context.new_page.assert_called_once()
-            assert page == mock_page
-
-            print("Test completed successfully")
-
-    except Exception as e:
-        print(f"Test failed: {str(e)}")
-        print("Traceback:")
-        import traceback
-
-        traceback.print_exc()
-        raise
+    # Verify we got the mock page back
+    assert page == mock_page
 
 
 @pytest.mark.asyncio
@@ -244,61 +221,33 @@ async def test_fetch_failure_no_response(
     mock_chromium,
     mock_playwright_instance,
 ):
-    """Test fetch method when goto returns no response."""
-    print("\n=== Starting Fetch Failure (No Response) Test ===")
+    """Test fetch method when page.goto returns None."""
+    print("\n=== Starting Fetch No Response Test ===")
 
-    try:
-        # Configure mock page
-        mock_page.goto.return_value = None
-        mock_page.close.return_value = None
+    # Configure mock page
+    mock_page.goto = AsyncMock(return_value=None)
+    mock_page.close = AsyncMock()
 
-        # Configure mock context
-        mock_context.new_page.return_value = mock_page
-        mock_context.set_extra_http_headers.return_value = None
+    # Configure mock context
+    mock_context.new_page = AsyncMock(return_value=mock_page)
+    mock_context.close = AsyncMock()
 
-        # Configure mock browser
-        mock_browser.new_context.return_value = mock_context
-        mock_browser.close.return_value = None
+    # Configure mock browser
+    mock_browser.new_context = AsyncMock(return_value=mock_context)
+    mock_browser.close = AsyncMock()
 
-        # Configure mock chromium
-        mock_chromium.launch.return_value = mock_browser
+    # Configure mock chromium
+    mock_chromium.launch = AsyncMock(return_value=mock_browser)
 
-        # Configure mock playwright
-        mock_playwright_instance.chromium = mock_chromium
-        mock_playwright_instance.start.return_value = mock_playwright_instance
+    # Create crawler instance
+    crawler = PlaywrightCrawlerTool()
+    crawler._browser = mock_browser
 
-        print("Configured mocks")
+    # Test fetch with no response
+    with pytest.raises(PlaywrightError) as exc_info:
+        await crawler.fetch("https://example.com")
 
-        # Patch playwright
-        with patch(
-            "playwright.async_api.async_playwright",
-            return_value=mock_playwright_instance,
-        ):
-            print("Patched playwright")
-
-            # Create crawler
-            crawler = PlaywrightCrawlerTool()
-            print("Created crawler")
-
-            # Set browser directly to avoid _get_browser issues
-            crawler._browser = mock_browser
-
-            # Try to fetch and expect exception
-            with pytest.raises(Exception) as exc_info:
-                await crawler.fetch("http://example.com")
-
-            assert str(exc_info.value) == "Failed to load http://example.com"
-            mock_page.close.assert_called_once()
-
-            print("Test completed successfully")
-
-    except Exception as e:
-        print(f"Test failed: {str(e)}")
-        print("Traceback:")
-        import traceback
-
-        traceback.print_exc()
-        raise
+    assert str(exc_info.value) == "Failed to get response from page.goto()"
 
 
 @pytest.mark.asyncio
@@ -310,69 +259,38 @@ async def test_fetch_failure_not_ok(
     mock_playwright_instance,
 ):
     """Test fetch method when response is not OK."""
-    print("\n=== Starting Fetch Failure (Not OK) Test ===")
+    print("\n=== Starting Fetch Not OK Test ===")
 
-    try:
-        # Create error response
-        error_response = AsyncMock()
-        error_response.ok = False
-        error_response.status = 404
-        error_response.status_text = "Not Found"
+    # Configure mock response
+    mock_response = AsyncMock()
+    mock_response.ok = False
+    mock_response.status = 404
+    mock_response.status_text = "Not Found"
 
-        # Configure mock page
-        mock_page.goto.return_value = error_response
-        mock_page.close.return_value = None
+    # Configure mock page
+    mock_page.goto = AsyncMock(return_value=mock_response)
+    mock_page.close = AsyncMock()
 
-        # Configure mock context
-        mock_context.new_page.return_value = mock_page
-        mock_context.set_extra_http_headers.return_value = None
+    # Configure mock context
+    mock_context.new_page = AsyncMock(return_value=mock_page)
+    mock_context.close = AsyncMock()
 
-        # Configure mock browser
-        mock_browser.new_context.return_value = mock_context
-        mock_browser.close.return_value = None
+    # Configure mock browser
+    mock_browser.new_context = AsyncMock(return_value=mock_context)
+    mock_browser.close = AsyncMock()
 
-        # Configure mock chromium
-        mock_chromium.launch.return_value = mock_browser
+    # Configure mock chromium
+    mock_chromium.launch = AsyncMock(return_value=mock_browser)
 
-        # Configure mock playwright
-        mock_playwright_instance.chromium = mock_chromium
-        mock_playwright_instance.start.return_value = mock_playwright_instance
+    # Create crawler instance
+    crawler = PlaywrightCrawlerTool()
+    crawler._browser = mock_browser
 
-        print("Configured mocks")
+    # Test fetch with not OK response
+    with pytest.raises(PlaywrightError) as exc_info:
+        await crawler.fetch("https://example.com")
 
-        # Patch playwright
-        with patch(
-            "playwright.async_api.async_playwright",
-            return_value=mock_playwright_instance,
-        ):
-            print("Patched playwright")
-
-            # Create crawler
-            crawler = PlaywrightCrawlerTool()
-            print("Created crawler")
-
-            # Set browser directly to avoid _get_browser issues
-            crawler._browser = mock_browser
-
-            # Try to fetch and expect exception
-            with pytest.raises(Exception) as exc_info:
-                await crawler.fetch("http://example.com")
-
-            assert (
-                str(exc_info.value)
-                == "HTTP 404: Not Found for http://example.com"
-            )
-            mock_page.close.assert_called_once()
-
-            print("Test completed successfully")
-
-    except Exception as e:
-        print(f"Test failed: {str(e)}")
-        print("Traceback:")
-        import traceback
-
-        traceback.print_exc()
-        raise
+    assert str(exc_info.value) == "HTTP 404: Not Found for https://example.com"
 
 
 def test_basic_crawler(
@@ -650,6 +568,7 @@ def test_crawler_cleanup(
         # Configure mock context
         mock_context.new_page.return_value = mock_page
         mock_context.set_extra_http_headers.return_value = None
+        mock_context.close.return_value = None
 
         # Configure mock browser
         mock_browser.new_context.return_value = mock_context

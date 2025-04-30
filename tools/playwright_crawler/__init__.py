@@ -1,5 +1,5 @@
-"""PlaywrightCrawlerTool for fetching HTML content from JS-rendered pages."""
+"""PlaywrightCrawler module."""
 
-from .tool import PlaywrightCrawlerConfig, PlaywrightCrawlerTool
+from .tool import PlaywrightConfig, PlaywrightCrawlerTool, PlaywrightError
 
-__all__ = ["PlaywrightCrawlerTool", "PlaywrightCrawlerConfig"]
+__all__ = ["PlaywrightConfig", "PlaywrightCrawlerTool", "PlaywrightError"]

@@ -1,117 +1,110 @@
-"""PlaywrightCrawlerTool for fetching content from websites using Playwright."""
+"""PlaywrightCrawlerTool for fetching HTML content from JS-rendered pages."""
 
-import asyncio
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from playwright.async_api import Browser, BrowserContext, Page, async_playwright
+from playwright.async_api import Browser, Page, async_playwright
 
-from tools.bot_defense import BotDefenseTool
+from tools.bot_defense.tool import BotDefenseTool
 
 
 @dataclass
-class PlaywrightCrawlerConfig:
-    """Configuration for PlaywrightCrawlerTool."""
+class PlaywrightConfig:
+    """Configuration for the PlaywrightCrawlerTool."""
 
-    timeout: int = 30000
     wait_until: str = "networkidle"
-    viewport_width: int = 1280
-    viewport_height: int = 720
     use_bot_defense: bool = True
+    viewport_width: int = 1920
+    viewport_height: int = 1080
+    timeout: int = 30000
+
+
+class PlaywrightError(Exception):
+    """Exception raised for errors in the PlaywrightCrawlerTool."""
+
+    pass
 
 
 class PlaywrightCrawlerTool:
-    """Tool for fetching content from websites using Playwright."""
+    """Tool for crawling JavaScript-rendered pages using Playwright."""
 
-    def __init__(self, config: Optional[PlaywrightCrawlerConfig] = None):
-        """Initialize PlaywrightCrawlerTool."""
-        self.config = config or PlaywrightCrawlerConfig()
+    def __init__(
+        self,
+        config: Optional[PlaywrightConfig] = None,
+        bot_defense: Optional[BotDefenseTool] = None,
+    ) -> None:
+        """Initialize PlaywrightCrawlerTool.
+
+        Args:
+            config: Optional configuration for the crawler
+            bot_defense: Optional bot defense tool
+        """
+        self.config = config or PlaywrightConfig()
+        self.bot_defense = bot_defense if self.config.use_bot_defense else None
+        self._page: Optional[Page] = None
         self._browser: Optional[Browser] = None
-        self.bot_defense = (
-            BotDefenseTool() if self.config.use_bot_defense else None
-        )
-
-    async def _get_browser(self) -> Browser:
-        """Get or create a browser instance."""
-        if not self._browser:
-            playwright = await async_playwright().start()
-            self._browser = await playwright.chromium.launch()
-        return self._browser
-
-    async def _get_page(self) -> Page:
-        """Get a new page instance."""
-        browser = await self._get_browser()
-        context: BrowserContext = await browser.new_context(
-            viewport={
-                "width": self.config.viewport_width,
-                "height": self.config.viewport_height,
-            }
-        )
-
-        if self.bot_defense:
-            headers = self.bot_defense.run()["headers"]
-            await context.set_extra_http_headers(headers)
-
-        return await context.new_page()
 
     async def fetch(self, url: str) -> Dict[str, Any]:
-        """Fetch content from a URL using Playwright."""
-        page: Optional[Page] = None
+        """Fetch a page using Playwright.
+
+        Args:
+            url: URL to fetch
+
+        Returns:
+            Dict containing page info (url, html)
+
+        Raises:
+            PlaywrightError: If page fetch fails
+        """
         try:
-            page = await self._get_page()
-            response = await page.goto(
-                url,
-                timeout=self.config.timeout,
-                wait_until=self.config.wait_until,
-            )
+            if not self._page:
+                if self.bot_defense:
+                    self._page = await self.bot_defense.get_new_page()
+                else:
+                    async with async_playwright() as playwright:
+                        browser = await playwright.chromium.launch()
+                        self._browser = browser
+                        self._page = await browser.new_page()
 
-            if not response:
-                return {
-                    "url": url,
-                    "status": 0,
-                    "content": "",
-                    "title": "",
-                    "headers": {},
-                }
+            await self._page.goto(url)
+            await self._page.wait_for_load_state(self.config.wait_until)
 
-            if not response.ok:
-                return {
-                    "url": url,
-                    "status": response.status,
-                    "content": "",
-                    "title": "",
-                    "headers": dict(response.headers),
-                }
+            if self.bot_defense:
+                await self.bot_defense.handle_page(self._page, url)
 
-            content = await page.content()
-            title = await page.title()
-
-            result: Dict[str, Any] = {
-                "url": url,
-                "status": response.status,
-                "content": content,
-                "title": title,
-                "headers": dict(response.headers),
-            }
-
-            return result
-
+            html = await self._page.content()
+            return {"url": url, "html": html}
         except Exception as e:
-            raise e
-        finally:
-            if page:
-                await page.close()
+            raise PlaywrightError(str(e)) from e
 
     async def cleanup(self):
         """Clean up resources."""
+        if self._page:
+            await self._page.close()
+            self._page = None
+
         if self._browser:
             await self._browser.close()
             self._browser = None
 
+        if self.bot_defense:
+            await self.bot_defense.cleanup()
+
     def run(self, url: str) -> Dict[str, Any]:
-        """Run the crawler on a URL."""
+        """Run the crawler synchronously.
+
+        Args:
+            url: The URL to fetch content from.
+
+        Returns:
+            A dictionary containing the HTML content and URL.
+
+        Raises:
+            PlaywrightError: If there is an error during fetching.
+        """
+        import asyncio
+
         try:
-            result = asyncio.run(self.fetch(url))
-            return result
-        finally:
-            asyncio.run(self.cleanup())
+            return asyncio.run(self.fetch(url))
+        except Exception as e:
+            raise PlaywrightError(str(e)) from e

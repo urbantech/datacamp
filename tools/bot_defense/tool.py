@@ -1,244 +1,102 @@
-"""BotDefenseTool for managing anti-bot detection measures."""
+"""BotDefenseTool for simulating human behavior."""
 
+import asyncio
 import random
-import time
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
-from fake_useragent import UserAgent
-from pydantic import BaseModel, Field, HttpUrl
-
-from tools.interfaces import ToolInterface
+from playwright.async_api import Browser, Page, async_playwright
 
 
-class BotDefenseConfig(BaseModel):
-    """Configuration for BotDefenseTool."""
+class BotDefenseTool:
+    """Tool for simulating human behavior to avoid bot detection."""
 
-    min_delay: float = Field(
-        default=1.0,
-        description="Minimum delay between requests in seconds",
-        ge=0.0,
-    )
-    max_delay: float = Field(
-        default=3.0,
-        description="Maximum delay between requests in seconds",
-        ge=0.0,
-    )
-    user_agent_type: str = Field(
-        default="random",
-        description="Type of User-Agent to use (random, chrome, firefox, etc.)",
-    )
-    proxies: List[HttpUrl] = Field(
-        default_factory=list,
-        description="List of proxy URLs to rotate through",
-    )
-    requests_per_minute: int = Field(
-        default=30,
-        description="Maximum number of requests per minute",
-        ge=1,
-    )
-    enable_cookies: bool = Field(
-        default=True,
-        description="Whether to enable cookie management",
-    )
+    def __init__(self):
+        """Initialize BotDefenseTool."""
+        self._browser: Optional[Browser] = None
 
+    async def init_browser(self) -> None:
+        """Initialize browser if not already initialized."""
+        if not self._browser:
+            playwright = await async_playwright().start()
+            self._browser = await playwright.chromium.launch(headless=True)
 
-class BotDefenseTool(ToolInterface):
-    """Tool for implementing anti-bot detection measures."""
+    async def get_new_page(self) -> Page:
+        """Get a new browser page.
 
-    def __init__(self, **kwargs: Dict[str, Any]) -> None:
-        """Initialize the BotDefenseTool.
+        Returns:
+            Page: A new Playwright page
+
+        Raises:
+            RuntimeError: If browser initialization fails
+        """
+        if not self._browser:
+            await self.init_browser()
+        if not self._browser:
+            raise RuntimeError("Failed to initialize browser")
+        return await self._browser.new_page()
+
+    async def simulate_human_behavior(self, page: Page, url: str) -> None:
+        """Simulate human behavior on a page.
 
         Args:
-            **kwargs: Configuration parameters for BotDefenseConfig
+            page: Playwright page to interact with
+            url: URL of the page
         """
-        self.config = BotDefenseConfig(**kwargs)
-        self.user_agent = UserAgent()
-        self._last_request_time: Optional[float] = None
-        self._request_times: List[float] = []
-        self._current_proxy_index: int = 0
-        self._cookies: Dict[str, str] = {}
+        if not page:
+            return
 
-    def _rotate_proxy(self) -> Optional[Dict[str, str]]:
-        """Rotate to the next proxy in the list.
+        try:
+            # Random mouse movements
+            for _ in range(random.randint(3, 7)):  # nosec B311
+                x = random.randint(100, 800)  # nosec B311
+                y = random.randint(100, 600)  # nosec B311
+                await page.mouse.move(x, y)
+                await asyncio.sleep(random.uniform(0.1, 0.5))  # nosec B311
 
-        Returns:
-            Dict containing proxy configuration or None if no proxies configured
-        """
-        if not self.config.proxies:
-            return None
-
-        proxy_url = self.config.proxies[self._current_proxy_index]
-        self._current_proxy_index = (self._current_proxy_index + 1) % len(
-            self.config.proxies
-        )
-
-        return {
-            "http": str(proxy_url),
-            "https": str(proxy_url),
-        }
-
-    def _enforce_rate_limit(self) -> None:
-        """Enforce the configured request rate limit."""
-        now = time.time()
-        minute_ago = now - 60
-
-        # Remove requests older than 1 minute
-        self._request_times = [t for t in self._request_times if t > minute_ago]
-
-        # If we're at or over the limit, sleep until we can make another request
-        if len(self._request_times) >= self.config.requests_per_minute:
-            sleep_time = 60.0 - (now - self._request_times[0])
-            if sleep_time > 0:
-                time.sleep(sleep_time)
-            self._request_times = self._request_times[1:]
-
-    def run(self, **kwargs: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute anti-bot measures and return headers.
-
-        Returns:
-            Dict containing headers, proxy settings, and cookies
-        """
-        now = time.time()
-
-        # Add delay if there was a previous request
-        if self._last_request_time is not None:
-            delay = random.uniform(
-                self.config.min_delay, self.config.max_delay
-            )  # nosec B311 - not used for cryptographic purposes
-            time_since_last = now - self._last_request_time
-            if time_since_last < delay:
-                time.sleep(delay - time_since_last)
-
-        # Clean up old requests and check rate limit
-        minute_ago = now - 60
-        self._request_times = [t for t in self._request_times if t > minute_ago]
-        if len(self._request_times) >= self.config.requests_per_minute:
-            self._enforce_rate_limit()
-
-        # Update request timing after rate limiting
-        self._last_request_time = now
-        self._request_times.append(now)
-
-        # Get appropriate User-Agent
-        if self.config.user_agent_type == "random":
-            user_agent = self.user_agent.random
-        else:
-            user_agent = getattr(self.user_agent, self.config.user_agent_type)
-
-        # Generate browser fingerprint
-        screen_resolution = (
-            random.choice(  # nosec B311 - not used for cryptographic purposes
-                [
-                    "1920x1080",
-                    "1366x768",
-                    "1536x864",
-                    "1440x900",
-                    "1280x720",
-                    "2560x1440",
-                ]
+            # Scroll behavior
+            await page.evaluate(
+                "window.scrollTo(0, document.body.scrollHeight * 0.3)"
             )
-        )
-        color_depth = random.choice(
-            ["24", "32"]
-        )  # nosec B311 - not used for cryptographic purposes
-        platform = random.choice(
-            ["Win32", "MacIntel", "Linux x86_64"]
-        )  # nosec B311 - not used for cryptographic purposes
+            await asyncio.sleep(random.uniform(0.5, 1.0))  # nosec B311
 
-        result = {
-            "headers": {
-                "User-Agent": user_agent,
-                "Accept": (
-                    "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                    "image/webp,*/*;q=0.8"
-                ),
-                "Accept-Language": "en-US,en;q=0.5",
-                "Accept-Encoding": "gzip, deflate, br",
-                "DNT": "1",
-                "Connection": "keep-alive",
-                "Upgrade-Insecure-Requests": "1",
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
-                "Sec-Fetch-User": "?1",
-                "Cache-Control": "max-age=0",
-                "Sec-Ch-Ua": f'"{user_agent}"',
-                "Sec-Ch-Ua-Mobile": "?0",
-                "Sec-Ch-Ua-Platform": f'"{platform}"',
-                "Viewport-Width": screen_resolution.split("x")[0],
-                "Screen-Resolution": screen_resolution,
-                "Color-Depth": color_depth,
-            }
-        }
+            # Random click
+            await page.mouse.click(
+                random.randint(100, 800),  # nosec B311
+                random.randint(100, 600),  # nosec B311
+            )
+        except Exception as e:
+            print(f"Error in simulate_human_behavior: {e}")
 
-        headers = result["headers"]
-
-        # Check required headers
-        assert "User-Agent" in headers
-        assert "Accept" in headers
-        assert "Accept-Language" in headers
-        assert len(headers["User-Agent"]) > 0
-
-        # Check browser fingerprinting headers
-        assert "Sec-Ch-Ua" in headers
-        assert "Sec-Ch-Ua-Mobile" in headers
-        assert "Sec-Ch-Ua-Platform" in headers
-        assert "Viewport-Width" in headers
-        assert "Screen-Resolution" in headers
-        assert "Color-Depth" in headers
-
-        # Add proxy configuration if available
-        proxy_config = self._rotate_proxy()
-        if proxy_config:
-            result["proxy"] = proxy_config
-
-        # Add cookies if enabled
-        if self.config.enable_cookies and self._cookies:
-            result["cookies"] = self._cookies
-
-        return result
-
-    def update_cookies(self, cookies: Dict[str, str]) -> None:
-        """Update stored cookies.
+    async def bypass_detection(self, page: Page) -> None:
+        """Bypass bot detection mechanisms.
 
         Args:
-            cookies: Dictionary of cookies to update
+            page: Playwright page to interact with
         """
-        if self.config.enable_cookies:
-            self._cookies.update(cookies)
+        # Set user agent
+        user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        await page.set_extra_http_headers({"User-Agent": user_agent})
 
-    @property
-    def name(self) -> str:
-        """Return the tool's name."""
-        return "BotDefenseTool"
-
-    @property
-    def description(self) -> str:
-        """Get tool description."""
-        return (
-            "Tool for managing anti-bot detection measures including delays, "
-            "user agents, proxies, and cookies"
+        # Disable webdriver flag
+        script = (
+            "Object.defineProperty(navigator, 'webdriver', "
+            "{get: () => undefined})"
         )
+        await page.evaluate(script)
 
-    @property
-    def input_types(self) -> Dict[str, Any]:
-        """Return the tool's input parameter types."""
-        return {
-            "min_delay": (float, "Minimum delay between requests in seconds"),
-            "max_delay": (float, "Maximum delay between requests in seconds"),
-            "user_agent_type": (
-                str,
-                "Type of User-Agent to use (random, chrome, firefox, etc.)",
-            ),
-            "proxies": (List[HttpUrl], "List of proxy URLs to rotate through"),
-            "requests_per_minute": (
-                int,
-                "Maximum number of requests per minute",
-            ),
-            "enable_cookies": (bool, "Whether to enable cookie management"),
-        }
+    async def handle_page(self, page: Page, url: str) -> None:
+        """Handle a page with bot detection.
 
-    @property
-    def output_type(self) -> Any:
-        """Return the tool's output type."""
-        return Dict[str, Any]
+        Args:
+            page: Playwright page to interact with
+            url: URL of the page
+        """
+        await page.goto(url)
+        await page.wait_for_load_state("networkidle")
+        await self.bypass_detection(page)
+        await self.simulate_human_behavior(page, url)
+
+    async def cleanup(self) -> None:
+        """Clean up resources."""
+        if self._browser:
+            await self._browser.close()

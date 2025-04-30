@@ -1,9 +1,9 @@
 """Tests for the APIPosterTool."""
 
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
+import httpx
 import pytest
-import requests
 
 from src.tools.api_poster_tool import APIPosterTool
 
@@ -11,10 +11,12 @@ from src.tools.api_poster_tool import APIPosterTool
 @pytest.fixture
 def api_poster():
     """Create an APIPosterTool instance for testing."""
-    return APIPosterTool(
+    poster = APIPosterTool(
         api_url="https://api.example.com/products",
         validator=Mock(),
     )
+    poster._session = AsyncMock()
+    return poster
 
 
 @pytest.fixture
@@ -35,26 +37,28 @@ def valid_product_data():
     }
 
 
-def test_successful_post(api_poster, valid_product_data):
+@pytest.mark.asyncio
+async def test_successful_post(api_poster, valid_product_data):
     """Test successful data posting."""
     mock_response = Mock()
     mock_response.json.return_value = {"id": "123", "status": "success"}
-    mock_response.status_code = 200
+    mock_response.raise_for_status.return_value = None
 
-    api_poster._session.post = Mock(return_value=mock_response)
+    api_poster._session.post = AsyncMock(return_value=mock_response)
     api_poster.validator.validate.return_value = (
         True,
         valid_product_data,
         None,
     )
 
-    success, data, error = api_poster.post_data(valid_product_data)
+    success, data, error = await api_poster.post_data(valid_product_data)
     assert success is True
     assert data == {"id": "123", "status": "success"}
     assert error is None
 
 
-def test_invalid_data_post(api_poster):
+@pytest.mark.asyncio
+async def test_invalid_data_post(api_poster):
     """Test posting invalid data."""
     invalid_data = {
         "title": "",  # Invalid: empty title
@@ -66,34 +70,36 @@ def test_invalid_data_post(api_poster):
         "Validation failed",
     )
 
-    success, data, error = api_poster.post_data(invalid_data)
+    success, data, error = await api_poster.post_data(invalid_data)
     assert success is False
     assert data is None
     assert error == "Validation failed: Validation failed"
 
 
-def test_api_error_handling(api_poster, valid_product_data):
+@pytest.mark.asyncio
+async def test_api_error_handling(api_poster, valid_product_data):
     """Test handling of API errors."""
     api_poster.validator.validate.return_value = (
         True,
         valid_product_data,
         None,
     )
-    api_poster._session.post.side_effect = requests.RequestException(
-        "API Error"
+    api_poster._session.post = AsyncMock(
+        side_effect=httpx.RequestError("API Error")
     )
 
-    success, data, error = api_poster.post_data(valid_product_data)
+    success, data, error = await api_poster.post_data(valid_product_data)
     assert success is False
     assert data is None
-    assert "API Error" in str(error)
+    assert "API Error" in error
 
 
-def test_api_error_with_json_response(api_poster, valid_product_data):
+@pytest.mark.asyncio
+async def test_api_error_with_json_response(api_poster, valid_product_data):
     """Test handling of API errors with JSON response."""
     mock_response = Mock()
     mock_response.json.return_value = {"error": "Invalid request"}
-    mock_error = requests.RequestException("HTTP Error")
+    mock_error = httpx.RequestError("HTTP Error")
     mock_error.response = mock_response
 
     api_poster.validator.validate.return_value = (
@@ -101,24 +107,30 @@ def test_api_error_with_json_response(api_poster, valid_product_data):
         valid_product_data,
         None,
     )
-    api_poster._session.post.side_effect = mock_error
+    api_poster._session.post = AsyncMock(side_effect=mock_error)
 
-    success, data, error = api_poster.post_data(valid_product_data)
+    success, data, error = await api_poster.post_data(valid_product_data)
     assert success is False
     assert data is None
-    assert "Invalid request" in str(error)
+    assert "Invalid request" in error
 
 
-def test_health_check_success(api_poster):
+@pytest.mark.asyncio
+async def test_health_check_success(api_poster):
     """Test successful health check."""
     mock_response = Mock()
-    mock_response.status_code = 200
-    api_poster._session.get = Mock(return_value=mock_response)
+    mock_response.raise_for_status.return_value = None
 
-    assert api_poster.health_check() is True
+    api_poster._session.get = AsyncMock(return_value=mock_response)
+
+    assert await api_poster.health_check() is True
 
 
-def test_health_check_failure(api_poster):
+@pytest.mark.asyncio
+async def test_health_check_failure(api_poster):
     """Test failed health check."""
-    api_poster._session.get.side_effect = requests.RequestException()
-    assert api_poster.health_check() is False
+    api_poster._session.get = AsyncMock(
+        side_effect=httpx.RequestError("Connection error")
+    )
+
+    assert await api_poster.health_check() is False

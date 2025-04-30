@@ -3,8 +3,8 @@
 import json
 from typing import Any, Dict, Optional, Tuple
 
-import requests
-from requests.exceptions import RequestException
+import httpx
+from httpx import HTTPStatusError, RequestError
 
 from .schemas import ProductSchema
 from .validator_tool import ValidatorTool
@@ -34,7 +34,7 @@ class APIPosterTool:
         self.validator = (
             validator if validator else ValidatorTool(ProductSchema)
         )
-        self._session = requests.Session()
+        self._session = httpx.AsyncClient()
         self.headers: Dict[str, str] = {}
         self.timeout = timeout
 
@@ -43,7 +43,7 @@ class APIPosterTool:
         if bearer_token:
             self.headers["Authorization"] = f"Bearer {bearer_token}"
 
-    def set_api_key(self, api_key: str) -> None:
+    async def set_api_key(self, api_key: str) -> None:
         """Set the API key for authentication.
 
         Args:
@@ -51,7 +51,7 @@ class APIPosterTool:
         """
         self.headers["X-API-Key"] = api_key
 
-    def set_bearer_token(self, token: str) -> None:
+    async def set_bearer_token(self, token: str) -> None:
         """Set the bearer token for authentication.
 
         Args:
@@ -59,7 +59,7 @@ class APIPosterTool:
         """
         self.headers["Authorization"] = f"Bearer {token}"
 
-    def update_headers(self, headers: Dict[str, str]) -> None:
+    async def update_headers(self, headers: Dict[str, str]) -> None:
         """Update request headers.
 
         Args:
@@ -67,7 +67,7 @@ class APIPosterTool:
         """
         self.headers.update(headers)
 
-    def post_data(
+    async def post_data(
         self, data: Dict[str, Any]
     ) -> Tuple[bool, Optional[Dict], Optional[str]]:
         """Post data to the API endpoint.
@@ -88,7 +88,7 @@ class APIPosterTool:
             data = validated_data
 
         try:
-            response = self._session.post(
+            response = await self._session.post(
                 self.api_url,
                 json=data,
                 headers=self.headers,
@@ -96,7 +96,7 @@ class APIPosterTool:
             )
             response.raise_for_status()
             return True, response.json(), None
-        except RequestException as e:
+        except HTTPStatusError as e:
             if hasattr(e.response, "json"):
                 try:
                     error_data = e.response.json()
@@ -104,8 +104,10 @@ class APIPosterTool:
                 except json.JSONDecodeError:
                     pass
             return False, None, str(e)
+        except RequestError as e:
+            return False, None, str(e)
 
-    def health_check(self) -> bool:
+    async def health_check(self) -> bool:
         """Check if the API endpoint is healthy.
 
         Returns:
@@ -119,10 +121,14 @@ class APIPosterTool:
             elif base_url.endswith("/products/"):
                 base_url = base_url[:-10]  # Remove /products/
             health_url = f"{base_url}/health"
-            response = self._session.get(
+            response = await self._session.get(
                 url=health_url, headers=self.headers, timeout=self.timeout
             )
             response.raise_for_status()
             return True
-        except RequestException:
+        except Exception:
             return False
+
+    async def cleanup(self):
+        """Clean up resources by closing the HTTP session."""
+        await self._session.aclose()

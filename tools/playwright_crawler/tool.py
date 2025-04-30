@@ -1,110 +1,139 @@
-"""PlaywrightCrawlerTool for fetching HTML content from JS-rendered pages."""
+"""PlaywrightCrawlerTool for web scraping."""
 
-from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from playwright.async_api import Browser, Page, async_playwright
+from playwright.async_api import Browser
 
 from tools.bot_defense.tool import BotDefenseTool
+from tools.interfaces import ToolInterface
+from tools.playwright_crawler.config import PlaywrightConfig
 
 
-@dataclass
-class PlaywrightConfig:
-    """Configuration for the PlaywrightCrawlerTool."""
-
-    wait_until: str = "networkidle"
-    use_bot_defense: bool = True
-    viewport_width: int = 1920
-    viewport_height: int = 1080
-    timeout: int = 30000
-
-
-class PlaywrightError(Exception):
-    """Exception raised for errors in the PlaywrightCrawlerTool."""
-
-    pass
-
-
-class PlaywrightCrawlerTool:
-    """Tool for crawling JavaScript-rendered pages using Playwright."""
+class PlaywrightCrawlerTool(ToolInterface):
+    """Tool for crawling web pages using Playwright."""
 
     def __init__(
         self,
-        config: Optional[PlaywrightConfig] = None,
+        browser: Optional[Browser] = None,
         bot_defense: Optional[BotDefenseTool] = None,
-    ) -> None:
+        config: Optional[PlaywrightConfig] = None,
+    ):
         """Initialize PlaywrightCrawlerTool.
 
         Args:
-            config: Optional configuration for the crawler
-            bot_defense: Optional bot defense tool
+            browser: Optional pre-configured browser instance
+            bot_defense: Optional BotDefenseTool instance
+            config: Optional PlaywrightConfig instance
         """
+        self._browser = browser
+        self._bot_defense = bot_defense or BotDefenseTool()
         self.config = config or PlaywrightConfig()
-        self.bot_defense = bot_defense if self.config.use_bot_defense else None
-        self._page: Optional[Page] = None
-        self._browser: Optional[Browser] = None
 
     async def fetch(self, url: str) -> Dict[str, Any]:
-        """Fetch a page using Playwright.
+        """Fetch a web page using Playwright.
 
         Args:
             url: URL to fetch
 
         Returns:
-            Dict containing page info (url, html)
-
-        Raises:
-            PlaywrightError: If page fetch fails
+            Dict containing:
+                - url: The final URL after any redirects
+                - content: The page content (HTML)
+                - status: HTTP status code
+                - headers: Response headers
+                - error: Error message if any
         """
+        if not self._browser:
+            raise RuntimeError("Browser not initialized")
+
+        page = await self._browser.new_page()
+
         try:
-            if not self._page:
-                if self.bot_defense:
-                    self._page = await self.bot_defense.get_new_page()
-                else:
-                    async with async_playwright() as playwright:
-                        browser = await playwright.chromium.launch()
-                        self._browser = browser
-                        self._page = await browser.new_page()
+            response = await page.goto(url)
+            if not response:
+                return {
+                    "url": url,
+                    "content": None,
+                    "status": None,
+                    "headers": {},
+                    "error": "Failed to get response",
+                }
 
-            await self._page.goto(url)
-            await self._page.wait_for_load_state(self.config.wait_until)
+            if not response.ok:
+                return {
+                    "url": url,
+                    "content": None,
+                    "status": response.status,
+                    "headers": response.headers,
+                    "error": f"Response not OK: {response.status}",
+                }
 
-            if self.bot_defense:
-                await self.bot_defense.handle_page(self._page, url)
+            await self._bot_defense.handle_page(page, url)
 
-            html = await self._page.content()
-            return {"url": url, "html": html}
+            content = await page.content()
+            return {
+                "url": url,
+                "content": content,
+                "status": response.status,
+                "headers": response.headers,
+                "error": None,
+            }
+
         except Exception as e:
-            raise PlaywrightError(str(e)) from e
+            return {
+                "url": url,
+                "content": None,
+                "status": None,
+                "headers": {},
+                "error": str(e),
+            }
+        finally:
+            await page.close()
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Clean up resources."""
-        if self._page:
-            await self._page.close()
-            self._page = None
-
         if self._browser:
             await self._browser.close()
             self._browser = None
 
-        if self.bot_defense:
-            await self.bot_defense.cleanup()
-
-    def run(self, url: str) -> Dict[str, Any]:
-        """Run the crawler synchronously.
+    def run(self, **kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the tool's main functionality.
 
         Args:
-            url: The URL to fetch content from.
+            **kwargs: Tool parameters
 
         Returns:
-            A dictionary containing the HTML content and URL.
-
-        Raises:
-            PlaywrightError: If there is an error during fetching.
+            Dict containing scraping results
         """
         import asyncio
 
+        url = kwargs.get("url")
+        if not isinstance(url, str):
+            raise ValueError("URL must be a string")
+
         try:
             return asyncio.run(self.fetch(url))
-        except Exception as e:
-            raise PlaywrightError(str(e)) from e
+        finally:
+            asyncio.run(self.cleanup())
+
+    @property
+    def name(self) -> str:
+        """Return the tool's name."""
+        return "PlaywrightCrawler"
+
+    @property
+    def description(self) -> str:
+        """Return the tool's description."""
+        return (
+            "Tool for crawling JavaScript-rendered web pages using Playwright"
+        )
+
+    @property
+    def input_types(self) -> Dict[str, Any]:
+        """Return the tool's input parameter types."""
+        return {"url": str}
+
+    @property
+    def output_type(self) -> Any:
+        """Return the tool's output type."""
+        return Dict[str, Any]

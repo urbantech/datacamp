@@ -1,162 +1,117 @@
-"""PlaywrightCrawlerTool for fetching HTML content from JavaScript-rendered pages."""
+"""PlaywrightCrawlerTool for fetching content from websites using Playwright."""
 
 import asyncio
-from typing import Dict, Any, Optional, Type
-from pydantic import BaseModel, Field
-from playwright.async_api import async_playwright, Browser, Page
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
-from ..interfaces import ToolInterface
-from ..bot_defense.tool import BotDefenseTool
+from playwright.async_api import Browser, BrowserContext, Page, async_playwright
+
+from tools.bot_defense import BotDefenseTool
 
 
-class PlaywrightCrawlerConfig(BaseModel):
+@dataclass
+class PlaywrightCrawlerConfig:
     """Configuration for PlaywrightCrawlerTool."""
-    
-    timeout: int = Field(
-        default=30000,
-        description="Maximum time to wait for page load in milliseconds"
-    )
-    wait_until: str = Field(
-        default="networkidle",
-        description="When to consider navigation successful",
-    )
-    viewport_width: int = Field(
-        default=1920,
-        description="Browser viewport width"
-    )
-    viewport_height: int = Field(
-        default=1080,
-        description="Browser viewport height"
-    )
-    use_bot_defense: bool = Field(
-        default=True,
-        description="Whether to use BotDefenseTool for anti-detection"
-    )
+
+    timeout: int = 30000
+    wait_until: str = "networkidle"
+    viewport_width: int = 1280
+    viewport_height: int = 720
+    use_bot_defense: bool = True
 
 
-class PlaywrightCrawlerInput(BaseModel):
-    """Input model for PlaywrightCrawlerTool."""
-    url: str = Field(description="URL to fetch content from")
+class PlaywrightCrawlerTool:
+    """Tool for fetching content from websites using Playwright."""
 
-
-class PlaywrightCrawlerOutput(BaseModel):
-    """Output model for PlaywrightCrawlerTool."""
-    url: str = Field(description="URL that was fetched")
-    status: int = Field(description="HTTP status code")
-    content: str = Field(description="HTML content of the page")
-    title: str = Field(description="Page title")
-    headers: Dict[str, str] = Field(description="Response headers")
-
-
-class PlaywrightCrawlerTool(ToolInterface):
-    """Tool for fetching HTML content from JavaScript-rendered pages using Playwright."""
-
-    name = "PlaywrightCrawlerTool"
-    description = "Fetches HTML content from JavaScript-rendered pages using Playwright"
-    
-    @property
-    def input_types(self) -> Dict[str, Type[BaseModel]]:
-        """Get input types for the tool."""
-        return {"input": PlaywrightCrawlerInput}
-    
-    @property
-    def output_type(self) -> Type[BaseModel]:
-        """Get output type for the tool."""
-        return PlaywrightCrawlerOutput
-    
     def __init__(self, config: Optional[PlaywrightCrawlerConfig] = None):
-        """Initialize the PlaywrightCrawlerTool.
-        
-        Args:
-            config: Optional configuration for the crawler
-        """
+        """Initialize PlaywrightCrawlerTool."""
         self.config = config or PlaywrightCrawlerConfig()
-        self.bot_defense = BotDefenseTool() if self.config.use_bot_defense else None
         self._browser: Optional[Browser] = None
-        self._context = None
-    
+        self.bot_defense = (
+            BotDefenseTool() if self.config.use_bot_defense else None
+        )
+
     async def _get_browser(self) -> Browser:
         """Get or create a browser instance."""
         if not self._browser:
             playwright = await async_playwright().start()
             self._browser = await playwright.chromium.launch()
         return self._browser
-    
+
     async def _get_page(self) -> Page:
-        """Create and configure a new page."""
+        """Get a new page instance."""
         browser = await self._get_browser()
-        context = await browser.new_context(
+        context: BrowserContext = await browser.new_context(
             viewport={
                 "width": self.config.viewport_width,
-                "height": self.config.viewport_height
+                "height": self.config.viewport_height,
             }
         )
-        
+
         if self.bot_defense:
             headers = self.bot_defense.run()["headers"]
             await context.set_extra_http_headers(headers)
-        
+
         return await context.new_page()
-    
+
     async def fetch(self, url: str) -> Dict[str, Any]:
-        """Fetch content from a URL using Playwright.
-        
-        Args:
-            url: The URL to fetch content from
-            
-        Returns:
-            Dict containing HTML content and metadata
-        """
-        page = await self._get_page()
-        
+        """Fetch content from a URL using Playwright."""
+        page: Optional[Page] = None
         try:
+            page = await self._get_page()
             response = await page.goto(
                 url,
                 timeout=self.config.timeout,
-                wait_until=self.config.wait_until
+                wait_until=self.config.wait_until,
             )
-            
+
             if not response:
-                raise Exception(f"Failed to load {url}")
-            
+                return {
+                    "url": url,
+                    "status": 0,
+                    "content": "",
+                    "title": "",
+                    "headers": {},
+                }
+
             if not response.ok:
-                raise Exception(
-                    f"HTTP {response.status}: {response.status_text} for {url}"
-                )
-            
+                return {
+                    "url": url,
+                    "status": response.status,
+                    "content": "",
+                    "title": "",
+                    "headers": dict(response.headers),
+                }
+
             content = await page.content()
             title = await page.title()
-            
-            return {
+
+            result: Dict[str, Any] = {
                 "url": url,
                 "status": response.status,
                 "content": content,
                 "title": title,
-                "headers": dict(response.headers)
+                "headers": dict(response.headers),
             }
-            
+
+            return result
+
+        except Exception as e:
+            raise e
         finally:
-            await page.close()
-    
+            if page:
+                await page.close()
+
     async def cleanup(self):
         """Clean up resources."""
         if self._browser:
             await self._browser.close()
             self._browser = None
-    
-    def run(self, **kwargs: Dict[str, Any]) -> Dict[str, Any]:
-        """Run the crawler on a URL.
-        
-        Args:
-            url: The URL to crawl
-            
-        Returns:
-            Dict containing the crawled content and metadata
-        """
-        input_model = PlaywrightCrawlerInput(**kwargs)
-        
+
+    def run(self, url: str) -> Dict[str, Any]:
+        """Run the crawler on a URL."""
         try:
-            result = asyncio.run(self.fetch(input_model.url))
-            return PlaywrightCrawlerOutput(**result).model_dump()
+            result = asyncio.run(self.fetch(url))
+            return result
         finally:
             asyncio.run(self.cleanup())

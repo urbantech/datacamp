@@ -44,8 +44,7 @@ jobs:
 
     - name: Run tests
       run: |
-        # For PR #47 (BS-8): Focus only on TemuScraperTool tests
-        poetry run pytest tests/tools/scrapers/test_temu_scraper.py -v --cov=tools.scrapers.temu_scraper --cov-report=xml --cov-fail-under=50
+        poetry run pytest tests/ -v --cov=tools --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -85,19 +84,19 @@ jobs:
       run: poetry install --no-interaction
 
     - name: Run black
-      run: poetry run black tools/scrapers/temu_scraper.py tests/tools/scrapers/test_temu_scraper.py --check
+      run: poetry run black . --check
 
     - name: Run isort
-      run: poetry run isort tools/scrapers/temu_scraper.py tests/tools/scrapers/test_temu_scraper.py --check-only --diff
+      run: poetry run isort . --check-only --diff
 
     - name: Run flake8
-      run: poetry run flake8 tools/scrapers/temu_scraper.py tests/tools/scrapers/test_temu_scraper.py
+      run: poetry run flake8 .
 
     - name: Run mypy
-      run: poetry run mypy tools/scrapers/temu_scraper.py
+      run: poetry run mypy .
 
     - name: Run bandit
-      run: poetry run bandit -r tools/scrapers/temu_scraper.py
+      run: poetry run bandit -r tools/
 
     - name: Run interrogate
-      run: poetry run interrogate -v tools/scrapers/temu_scraper.py
+      run: poetry run interrogate -v tools/

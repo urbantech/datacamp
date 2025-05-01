@@ -109,6 +109,56 @@ class BaseScraper(ABC):
         """
         pass
 
+    @abstractmethod
+    def extract_specifications(self, content: Dict[str, Any]) -> Dict[str, str]:
+        """Extract product specifications from page content.
+
+        Args:
+            content: Dictionary containing page content and metadata
+
+        Returns:
+            Dict[str, str]: Product specifications
+        """
+        pass
+
+    @abstractmethod
+    def extract_size_info(self, content: Dict[str, Any]) -> Dict[str, str]:
+        """Extract product size information from page content.
+
+        Args:
+            content: Dictionary containing page content and metadata
+
+        Returns:
+            Dict[str, str]: Product size information
+        """
+        pass
+
+    @abstractmethod
+    def extract_color_options(self, content: Dict[str, Any]) -> List[str]:
+        """Extract product color options from page content.
+
+        Args:
+            content: Dictionary containing page content and metadata
+
+        Returns:
+            List[str]: Product color options
+        """
+        pass
+
+    @abstractmethod
+    def extract_reviews_summary(
+        self, content: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Extract product reviews summary from page content.
+
+        Args:
+            content: Dictionary containing page content and metadata
+
+        Returns:
+            Dict[str, Any]: Product reviews summary
+        """
+        pass
+
     def can_handle_url(self, url: str) -> bool:
         """Check if this scraper can handle the given URL.
 
@@ -122,18 +172,18 @@ class BaseScraper(ABC):
         return self.get_domain() in url
 
     async def scrape_product(self, url: str) -> Dict[str, Any]:
-        """Scrape product data from the given URL.
+        """Scrape product data from URL.
 
         Args:
-            url: Product URL to scrape
+            url: Product URL
 
         Returns:
-            Dict containing product data
+            Dict[str, Any]: Product data
         """
-        if not self.can_handle_url(url):
-            raise ValueError(f"Cannot handle URL: {url}")
-
         content = await self.crawler.fetch(url)
+        if not content:
+            return {}
+
         return {
             "title": self.extract_title(content),
             "price": self.extract_price(content),
@@ -141,6 +191,11 @@ class BaseScraper(ABC):
             "images": self.extract_images(content),
             "category": self.extract_category(content),
             "description": self.extract_description(content),
+            "specifications": self.extract_specifications(content),
+            "size_info": self.extract_size_info(content),
+            "color_options": self.extract_color_options(content),
+            "reviews_summary": self.extract_reviews_summary(content),
+            "source_url": url,
             "url": url,
         }
 

@@ -2,6 +2,6 @@
 
 from .base_scraper import BaseScraper
 from .shein_scraper import SheinScraper
-from .temu_scraper import TemuScraper
+from .temu_scraper import TemuScraperTool
 
-__all__ = ["BaseScraper", "SheinScraper", "TemuScraper"]
+__all__ = ["BaseScraper", "SheinScraper", "TemuScraperTool"]

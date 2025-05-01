@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from tools.scrapers.temu_scraper import TemuScraper
+from tools.scrapers.temu_scraper import TemuScraperTool
 
 
 @pytest.fixture
@@ -18,8 +18,8 @@ def mock_crawler():
 
 @pytest.fixture
 def temu_scraper(mock_crawler):
-    """Create a TemuScraper instance."""
-    return TemuScraper(crawler=mock_crawler)
+    """Create a TemuScraperTool instance."""
+    return TemuScraperTool(crawler=mock_crawler)
 
 
 @pytest.fixture
@@ -52,12 +52,75 @@ def product_html():
                 <span class="DetailBreadcrumb_item">Accessories</span>
             </nav>
             <div class="DetailDescription_content">
-                A great test product description
+                <p>A great test product description</p>
             </div>
-            <div class="DetailGallery_image">
+            <div class="DetailSpecs">
+                <div class="DetailSpecs_item">
+                    <span class="DetailSpecs_label">Material</span>
+                    <span class="DetailSpecs_value">Cotton</span>
+                </div>
+                <div class="DetailSpecs_item">
+                    <span class="DetailSpecs_label">Style</span>
+                    <span class="DetailSpecs_value">Casual</span>
+                </div>
+            </div>
+            <div class="DetailSize">
+                <div class="DetailSize_item">
+                    <span class="DetailSize_label">Size</span>
+                    <span class="DetailSize_value">S</span>
+                </div>
+                <div class="DetailSize_item">
+                    <span class="DetailSize_label">Size</span>
+                    <span class="DetailSize_value">M</span>
+                </div>
+                <div class="DetailSize_item">
+                    <span class="DetailSize_label">Size</span>
+                    <span class="DetailSize_value">L</span>
+                </div>
+            </div>
+            <div class="DetailColor">
+                <div class="DetailColor_item">
+                    <span class="DetailColor_label">Color</span>
+                    <span class="DetailColor_value">Red</span>
+                </div>
+                <div class="DetailColor_item">
+                    <span class="DetailColor_label">Color</span>
+                    <span class="DetailColor_value">Blue</span>
+                </div>
+            </div>
+            <div class="DetailSpecs">
+                <div class="DetailSpecs_item">
+                    <div class="DetailSpecs_key">Material</div>
+                    <div class="DetailSpecs_value">Cotton</div>
+                </div>
+                <div class="DetailSpecs_item">
+                    <div class="DetailSpecs_key">Style</div>
+                    <div class="DetailSpecs_value">Casual</div>
+                </div>
+            </div>
+            <div class="DetailSize">
+                <div class="DetailSize_size">S</div>
+                <div class="DetailSize_size">M</div>
+                <div class="DetailSize_size">L</div>
+            </div>
+            <div class="DetailColor">
+                <div class="DetailColor_color">Red</div>
+                <div class="DetailColor_color">Blue</div>
+            </div>
+            <div class="DetailRating">
+                <div class="DetailRating_rating">4.5</div>
+                <div class="DetailRating_count">(123)</div>
+            </div>
+            <div class="DetailReviews">
+                <div class="DetailReviews_summary">
+                    <div class="DetailReviews_rating">4.5</div>
+                    <div class="DetailReviews_count">123 reviews</div>
+                </div>
+            </div>
+            <div class="product-image">
                 <img src="https://img.temu.com/image1.jpg">
             </div>
-            <div class="DetailGallery_image">
+            <div class="product-image">
                 <img src="https://img.temu.com/image2.jpg">
             </div>
         </body>
@@ -83,6 +146,13 @@ async def test_scrape_product(temu_scraper, product_html):
     assert product["currency"] == "USD"
     assert product["category"] == "Accessories"
     assert product["description"] == "A great test product description"
+    assert product["specifications"] == {
+        "Material": "Cotton",
+        "Style": "Casual",
+    }
+    assert product["size_info"] == ["S", "M", "L"]
+    assert product["color_options"] == ["Red", "Blue"]
+    assert product["reviews_summary"] == {"rating": 4.5, "review_count": 123}
     assert product["images"] == [
         "https://img.temu.com/image1.jpg",
         "https://img.temu.com/image2.jpg",
@@ -117,4 +187,118 @@ def test_extract_category_missing(temu_scraper):
 def test_extract_description_missing(temu_scraper):
     """Test description extraction with missing element."""
     with pytest.raises(ValueError, match="Could not find product description"):
-        temu_scraper.extract_description({"html": "<html></html>"})
+        temu_scraper.extract_description({"html": "<div></div>"})
+
+
+def test_extract_specifications(temu_scraper):
+    """Test specifications extraction."""
+    content = {
+        "html": """
+        <div class='DetailSpecs'>
+            <div class='DetailSpecs_item'>
+                <span class='DetailSpecs_label'>Material</span>
+                <span class='DetailSpecs_value'>Cotton</span>
+            </div>
+            <div class='DetailSpecs_item'>
+                <span class='DetailSpecs_label'>Style</span>
+                <span class='DetailSpecs_value'>Casual</span>
+            </div>
+        </div>
+        """
+    }
+    specs = temu_scraper.extract_specifications(content)
+    assert specs == {"Material": "Cotton", "Style": "Casual"}
+
+
+def test_extract_size_info(temu_scraper):
+    """Test size info extraction."""
+    content = {
+        "html": """
+        <div class='DetailSize'>
+            <div class='DetailSize_item'>
+                <span class='DetailSize_label'>Size</span>
+                <span class='DetailSize_value'>S</span>
+            </div>
+            <div class='DetailSize_item'>
+                <span class='DetailSize_label'>Size</span>
+                <span class='DetailSize_value'>M</span>
+            </div>
+            <div class='DetailSize_item'>
+                <span class='DetailSize_label'>Size</span>
+                <span class='DetailSize_value'>L</span>
+            </div>
+        </div>
+        """
+    }
+    sizes = temu_scraper.extract_size_info(content)
+    assert sizes == ["S", "M", "L"]
+
+
+def test_extract_color_options(temu_scraper):
+    """Test color options extraction."""
+    content = {
+        "html": """
+        <div class='DetailColor'>
+            <div class='DetailColor_item'>
+                <span class='DetailColor_label'>Color</span>
+                <span class='DetailColor_value'>Red</span>
+            </div>
+            <div class='DetailColor_item'>
+                <span class='DetailColor_label'>Color</span>
+                <span class='DetailColor_value'>Blue</span>
+            </div>
+        </div>
+        """
+    }
+    colors = temu_scraper.extract_color_options(content)
+    assert colors == ["Red", "Blue"]
+
+
+def test_extract_reviews_summary(temu_scraper):
+    """Test reviews summary extraction."""
+    content = {
+        "html": """
+        <div class='DetailReviews'>
+            <div class='DetailReviews_summary'>
+                <div class='DetailReviews_rating'>4.5</div>
+                <div class='DetailReviews_count'>123 reviews</div>
+            </div>
+        </div>
+        """
+    }
+    reviews = temu_scraper.extract_reviews_summary(content)
+    assert reviews == {"rating": 4.5, "review_count": 123}
+
+
+def test_extract_reviews_summary_missing(temu_scraper):
+    """Test reviews summary extraction with missing elements."""
+    with pytest.raises(ValueError, match="Could not find reviews summary"):
+        temu_scraper.extract_reviews_summary({"html": "<div></div>"})
+
+
+def test_extract_reviews_summary_invalid_format(temu_scraper):
+    """Test reviews summary extraction with invalid format."""
+    content = {
+        "html": """
+        <div class='DetailReviews'>
+            <div class='DetailReviews_summary'>
+                <div class='DetailReviews_rating'>invalid</div>
+                <div class='DetailReviews_count'>not a number reviews</div>
+            </div>
+        </div>
+        """
+    }
+    with pytest.raises(ValueError, match="Invalid reviews summary format"):
+        temu_scraper.extract_reviews_summary(content)
+
+
+def test_extract_size_info_missing(temu_scraper):
+    """Test size info extraction with missing elements."""
+    with pytest.raises(ValueError, match="Could not find product sizes"):
+        temu_scraper.extract_size_info({"html": "<div></div>"})
+
+
+def test_extract_color_options_missing(temu_scraper):
+    """Test color options extraction with missing elements."""
+    with pytest.raises(ValueError, match="Could not find product colors"):
+        temu_scraper.extract_color_options({"html": "<div></div>"})

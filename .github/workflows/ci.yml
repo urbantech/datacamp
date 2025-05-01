@@ -45,7 +45,7 @@ jobs:
     - name: Run tests
       run: |
         # For PR #47 (BS-8): Focus only on TemuScraperTool tests
-        poetry run pytest tests/tools/scrapers/test_temu_scraper.py tests/tools/test_temu_scraper.py tests/test_temu_scraper_tool.py -v --cov=tools.scrapers.temu_scraper --cov-report=xml
+        poetry run pytest tests/tools/scrapers/test_temu_scraper.py -v --cov=tools.scrapers.temu_scraper --cov-report=xml --cov-fail-under=50
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

@@ -77,10 +77,8 @@ source = ["tools"]
 omit = ["tests/*"]
 
 [tool.coverage.report]
-# Temporarily focusing on TemuScraperTool for PR #47 (BS-8)
-fail_under = 50
+fail_under = 80
 show_missing = true
-include = ["tools/scrapers/temu_scraper.py"]
 
 [tool.interrogate]
 ignore-init-method = true
